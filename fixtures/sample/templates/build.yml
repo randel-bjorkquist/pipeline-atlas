@@ -1,0 +1,22 @@
+# build.yml - build-once template (story 102). Produces one versioned artifact,
+# environment-agnostic (no config baked in). It pulls in a shared version-stamp
+# steps file that is intentionally NOT present in this target, so the parser has
+# to emit an external node and flag the unresolved reference.
+parameters:
+- name: artifactName
+  type: string
+  default: 'sampleapp'
+
+jobs:
+- job: BuildOnce
+  displayName: 'Build once (versioned)'
+  steps:
+  - template: steps-version.yml   # deliberately unresolved: this file does not exist
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore'
+    inputs:
+      command: restore
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish artifact'
+    inputs:
+      artifact: '${{ parameters.artifactName }}'

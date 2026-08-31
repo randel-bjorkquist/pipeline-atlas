@@ -1,0 +1,27 @@
+# deploy.yml - deploy-artifact template (story 103). Downloads the build-once
+# artifact and deploys it to a target environment. The deployment job binds to an
+# ADO Environment (via environment:), which the parser turns into an inferred
+# adoEnvironment node with a runsOnEnvironment edge. envName carries a default so
+# the environment name resolves when this template is read on its own.
+parameters:
+- name: envName
+  type: string
+  default: dev
+- name: whatIf
+  type: boolean
+  default: true
+
+jobs:
+- deployment: DeployArtifact
+  displayName: 'Deploy to ${{ parameters.envName }}'
+  environment: ${{ parameters.envName }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: current
+        - task: PowerShell@2
+          displayName: 'Apply config and deploy'
+          inputs:
+            targetType: inline
+            script: 'Write-Host "deploy $(Build.BuildId)"'

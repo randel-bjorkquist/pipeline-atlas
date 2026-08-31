@@ -1,0 +1,4 @@
+# inner.yml - steps used on the true branch (story 201).
+steps:
+- task: PowerShell@2
+  displayName: 'Inner work'

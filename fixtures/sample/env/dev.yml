@@ -1,0 +1,5 @@
+# dev.yml - Dev environment config (story 104). Applied at deploy time by the
+# deploy template; kept out of the build so the same artifact promotes unchanged.
+variables:
+  siteName: sample-dev
+  slotCount: 1

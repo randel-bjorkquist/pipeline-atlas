@@ -1,0 +1,292 @@
+{
+  "target": {
+    "displayName": "Sample Pipeline",
+    "description": "Tiny synthetic target that exercises the Pipeline Atlas core edges.",
+    "generatedAt": "2020-01-01T00:00:00.000Z",
+    "toolVersion": "0.0.0-test"
+  },
+  "nodes": [
+    {
+      "id": "env:dev",
+      "type": "adoEnvironment",
+      "title": "dev",
+      "purpose": "ADO Environment (inferred from a deployment binding).",
+      "tags": [],
+      "flags": [],
+      "status": "active",
+      "source": "inferred"
+    },
+    {
+      "id": "envconfig:env/dev",
+      "type": "envConfig",
+      "path": "env/dev.yml",
+      "title": "dev",
+      "purpose": "dev.yml - Dev environment config (story 104). Applied at deploy time by the\ndeploy template; kept out of the build so the same artifact promotes unchanged.",
+      "clusterId": "env-configs",
+      "tags": [
+        {
+          "kind": "story",
+          "id": "104",
+          "url": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/104"
+        }
+      ],
+      "flags": [],
+      "status": "active",
+      "source": "parsed"
+    },
+    {
+      "id": "external:templates/steps-version",
+      "type": "external",
+      "title": "steps-version",
+      "purpose": "Referenced but not found in this target: templates/steps-version.yml",
+      "tags": [],
+      "flags": [],
+      "status": "active",
+      "source": "inferred"
+    },
+    {
+      "id": "pipeline:Entry",
+      "type": "entryPipeline",
+      "path": "Entry.yml",
+      "title": "Entry",
+      "label": "Deploy to DEV (Entry)",
+      "purpose": "Entry.yml - sample entry pipeline (story 101, feature 100). Builds one artifact,\nthen promotes it to Dev. This is the vertical slice: an entry pipeline that\nincludes a build template and a deploy template, where the deploy stage targets\nan ADO environment. It exercises includesTemplate, deploysTo and (via the deploy\ntemplate) runsOnEnvironment; the build template pulls in an unresolved reference.",
+      "clusterId": "pipelines",
+      "category": "deployment",
+      "trigger": "CI: main",
+      "pool": "Default",
+      "tags": [
+        {
+          "kind": "feature",
+          "id": "100",
+          "url": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/100"
+        },
+        {
+          "kind": "story",
+          "id": "101",
+          "url": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/101"
+        }
+      ],
+      "flags": [],
+      "status": "active",
+      "source": "parsed"
+    },
+    {
+      "id": "template:templates/build",
+      "type": "template",
+      "path": "templates/build.yml",
+      "title": "build",
+      "purpose": "build.yml - build-once template (story 102). Produces one versioned artifact,\nenvironment-agnostic (no config baked in). It pulls in a shared version-stamp\nsteps file that is intentionally NOT present in this target, so the parser has\nto emit an external node and flag the unresolved reference.",
+      "clusterId": "templates",
+      "parameters": [
+        {
+          "name": "artifactName",
+          "type": "string",
+          "default": "sampleapp"
+        }
+      ],
+      "tags": [
+        {
+          "kind": "story",
+          "id": "102",
+          "url": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/102"
+        }
+      ],
+      "flags": [
+        {
+          "severity": "techdebt",
+          "note": "Unresolved template reference: steps-version.yml (resolved to templates/steps-version.yml, not found in target)",
+          "stepId": "build/BuildOnce/steps-version-yml"
+        }
+      ],
+      "status": "active",
+      "source": "parsed"
+    },
+    {
+      "id": "template:templates/deploy",
+      "type": "template",
+      "path": "templates/deploy.yml",
+      "title": "deploy",
+      "purpose": "deploy.yml - deploy-artifact template (story 103). Downloads the build-once\nartifact and deploys it to a target environment. The deployment job binds to an\nADO Environment (via environment:), which the parser turns into an inferred\nadoEnvironment node with a runsOnEnvironment edge. envName carries a default so\nthe environment name resolves when this template is read on its own.",
+      "clusterId": "templates",
+      "parameters": [
+        {
+          "name": "envName",
+          "type": "string",
+          "default": "dev"
+        },
+        {
+          "name": "whatIf",
+          "type": "boolean",
+          "default": "true"
+        }
+      ],
+      "tags": [
+        {
+          "kind": "story",
+          "id": "103",
+          "url": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/103"
+        }
+      ],
+      "flags": [],
+      "status": "active",
+      "source": "parsed"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploysTo:pipeline:Entry=\u003Eenv:dev@Entry/Deploy_Dev",
+      "from": "pipeline:Entry",
+      "to": "env:dev",
+      "kind": "deploysTo",
+      "atStepId": "Entry/Deploy_Dev"
+    },
+    {
+      "id": "includesTemplate:pipeline:Entry=\u003Etemplate:templates/build@Entry/Build/build-yml",
+      "from": "pipeline:Entry",
+      "to": "template:templates/build",
+      "kind": "includesTemplate",
+      "atStepId": "Entry/Build/build-yml"
+    },
+    {
+      "id": "includesTemplate:pipeline:Entry=\u003Etemplate:templates/deploy@Entry/Deploy_Dev/deploy-yml",
+      "from": "pipeline:Entry",
+      "to": "template:templates/deploy",
+      "kind": "includesTemplate",
+      "atStepId": "Entry/Deploy_Dev/deploy-yml"
+    },
+    {
+      "id": "includesTemplate:template:templates/build=\u003Eexternal:templates/steps-version@build/BuildOnce/steps-version-yml",
+      "from": "template:templates/build",
+      "to": "external:templates/steps-version",
+      "kind": "includesTemplate",
+      "atStepId": "build/BuildOnce/steps-version-yml"
+    },
+    {
+      "id": "runsOnEnvironment:template:templates/deploy=\u003Eenv:dev@deploy/DeployArtifact",
+      "from": "template:templates/deploy",
+      "to": "env:dev",
+      "kind": "runsOnEnvironment",
+      "atStepId": "deploy/DeployArtifact"
+    }
+  ],
+  "steps": [
+    {
+      "id": "Entry/Build",
+      "nodeId": "pipeline:Entry",
+      "kind": "stage",
+      "name": "Build once",
+      "doc": "",
+      "tags": []
+    },
+    {
+      "id": "Entry/Build/build-yml",
+      "nodeId": "pipeline:Entry",
+      "parentId": "Entry/Build",
+      "kind": "templateInclude",
+      "name": "build.yml",
+      "doc": "",
+      "action": "template: templates/build.yml",
+      "tags": []
+    },
+    {
+      "id": "Entry/Deploy_Dev",
+      "nodeId": "pipeline:Entry",
+      "kind": "stage",
+      "name": "Promote to Dev",
+      "doc": "",
+      "tags": []
+    },
+    {
+      "id": "Entry/Deploy_Dev/deploy-yml",
+      "nodeId": "pipeline:Entry",
+      "parentId": "Entry/Deploy_Dev",
+      "kind": "templateInclude",
+      "name": "deploy.yml",
+      "doc": "",
+      "action": "template: templates/deploy.yml",
+      "tags": []
+    },
+    {
+      "id": "build/BuildOnce",
+      "nodeId": "template:templates/build",
+      "kind": "job",
+      "name": "Build once (versioned)",
+      "doc": "",
+      "tags": []
+    },
+    {
+      "id": "build/BuildOnce/steps-version-yml",
+      "nodeId": "template:templates/build",
+      "parentId": "build/BuildOnce",
+      "kind": "templateInclude",
+      "name": "steps-version.yml",
+      "doc": "",
+      "action": "template: steps-version.yml",
+      "tags": []
+    },
+    {
+      "id": "build/BuildOnce/restore",
+      "nodeId": "template:templates/build",
+      "parentId": "build/BuildOnce",
+      "kind": "step",
+      "name": "Restore",
+      "doc": "",
+      "action": "DotNetCoreCLI@2",
+      "tags": []
+    },
+    {
+      "id": "build/BuildOnce/publish-artifact",
+      "nodeId": "template:templates/build",
+      "parentId": "build/BuildOnce",
+      "kind": "step",
+      "name": "Publish artifact",
+      "doc": "",
+      "action": "PublishPipelineArtifact@1",
+      "tags": []
+    },
+    {
+      "id": "deploy/DeployArtifact",
+      "nodeId": "template:templates/deploy",
+      "kind": "job",
+      "name": "Deploy to ${{ parameters.envName }}",
+      "doc": "",
+      "tags": []
+    },
+    {
+      "id": "deploy/DeployArtifact/download-current",
+      "nodeId": "template:templates/deploy",
+      "parentId": "deploy/DeployArtifact",
+      "kind": "step",
+      "name": "download current",
+      "doc": "",
+      "action": "download: current",
+      "tags": []
+    },
+    {
+      "id": "deploy/DeployArtifact/apply-config-and-deploy",
+      "nodeId": "template:templates/deploy",
+      "parentId": "deploy/DeployArtifact",
+      "kind": "step",
+      "name": "Apply config and deploy",
+      "doc": "",
+      "action": "PowerShell@2",
+      "tags": []
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow:entry",
+      "title": "Run: Entry",
+      "trigger": "CI: main",
+      "path": [
+        "pipeline:Entry",
+        "Entry/Build",
+        "template:templates/build",
+        "Entry/Deploy_Dev",
+        "template:templates/deploy",
+        "env:dev"
+      ]
+    }
+  ]
+}

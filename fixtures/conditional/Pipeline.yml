@@ -1,0 +1,17 @@
+# Pipeline.yml - includes wrapped in ${{ if/else }} expression blocks (story 200).
+# Real Azure Pipelines templates nest stages/jobs/steps inside these; the parser
+# must descend into them or it misses the includes entirely.
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+- stage: Deploy
+  jobs:
+  - job: Work
+    steps:
+    - ${{ if eq(parameters.enabled, true) }}:
+      - template: steps/inner.yml
+    - ${{ else }}:
+      - template: steps/fallback.yml

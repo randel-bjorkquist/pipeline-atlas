@@ -1,0 +1,27 @@
+# .NET build output
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+*.user
+
+# Publish output
+publish/
+artifacts/
+
+# Rider / VS
+.idea/
+.vs/
+
+# Node (viewer build tooling only; end users never need it)
+node_modules/
+dist/
+.vite/
+
+# Local analysis targets live under inputs/ and are not part of the repo.
+inputs/
+
+# Claude Code scratch worktrees (orphaned scaffolding copies)
+.claude/worktrees/
+
+.DS_Store

@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PipelineAtlas.Core\PipelineAtlas.Core.csproj" />
+  </ItemGroup>
+
+  <!-- `patlas view` runs a tiny local web server (Kestrel) to serve the viewer. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- Embed the built viewer (src/PipelineAtlas.App/dist) so the self-contained exe
+       carries the whole UI. If dist is missing but the app's deps are installed,
+       build it first; then add the files as resources before they're named. Set
+       -p:BuildViewer=false to skip (e.g. a CI stage that builds the viewer itself). -->
+  <PropertyGroup>
+    <ViewerDir>$(MSBuildProjectDirectory)\..\PipelineAtlas.App</ViewerDir>
+  </PropertyGroup>
+
+  <Target Name="BuildViewer"
+          BeforeTargets="AssignTargetPaths"
+          Condition="'$(BuildViewer)' != 'false' and !Exists('$(ViewerDir)\dist\index.html') and Exists('$(ViewerDir)\node_modules')">
+    <Message Importance="high" Text="patlas: building embedded viewer (src/PipelineAtlas.App)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(ViewerDir)" />
+  </Target>
+
+  <!-- Pack the built viewer into one zip and embed it as a single resource
+       (viewer.zip). ViewerAssets serves entries out of the zip at runtime. -->
+  <Target Name="PackViewer"
+          AfterTargets="BuildViewer"
+          BeforeTargets="AssignTargetPaths"
+          Condition="Exists('$(ViewerDir)\dist\index.html')">
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <ZipDirectory SourceDirectory="$(ViewerDir)\dist"
+                  DestinationFile="$(IntermediateOutputPath)viewer.zip"
+                  Overwrite="true" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(IntermediateOutputPath)viewer.zip" LogicalName="viewer.zip" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- The command users type is `patlas`, so the published executable is named for it. -->
+    <AssemblyName>patlas</AssemblyName>
+    <RootNamespace>PipelineAtlas.Cli</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The manifest contract travels inside the assembly so a self-contained exe
+         validates without any file next to it. -->
+    <EmbeddedResource Include="Schema\manifest.schema.json" />
+  </ItemGroup>
+
+</Project>

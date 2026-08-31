@@ -1,0 +1,4 @@
+# fallback.yml - steps used on the else branch (story 202).
+steps:
+- task: Bash@3
+  displayName: 'Fallback work'

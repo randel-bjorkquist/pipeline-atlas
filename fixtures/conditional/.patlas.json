@@ -1,0 +1,7 @@
+{
+  "displayName": "Conditional Fixture",
+  "description": "Covers ${{ if/else }}-wrapped template includes (Azure Pipelines expression blocks).",
+  "workItems": {
+    "tagPatterns": { "story": "story\\s+(\\d+)" }
+  }
+}

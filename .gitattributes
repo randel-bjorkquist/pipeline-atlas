@@ -1,0 +1,7 @@
+# Deterministic output depends on stable line endings. Force LF for text so the
+# golden manifest and generated manifest.json compare byte-for-byte across OSes.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

@@ -1,0 +1,24 @@
+{
+  "displayName": "Sample Pipeline",
+  "description": "Tiny synthetic target that exercises the Pipeline Atlas core edges.",
+
+  "scan": {
+    "include": ["**/*.yml", "**/*.yaml", "**/*.md", "**/*.json"],
+    "exclude": ["**/node_modules/**"]
+  },
+
+  "workItems": {
+    "baseUrl": "https://dev.azure.com/sample-org/sample-project/_workitems/edit/",
+    "tagPatterns": {
+      "story": "story\\s+(\\d+)",
+      "feature": "feature\\s+(\\d+)",
+      "bug": "bug\\s+(\\d+)"
+    }
+  },
+
+  "clusters": [
+    { "id": "pipelines", "label": "Pipelines", "match": ["Entry.yml"] },
+    { "id": "templates", "label": "Templates", "match": ["templates/**"] },
+    { "id": "env-configs", "label": "Environment configs", "match": ["env/**"] }
+  ]
+}

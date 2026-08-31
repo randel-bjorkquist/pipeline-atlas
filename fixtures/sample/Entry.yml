@@ -1,0 +1,28 @@
+# Entry.yml - sample entry pipeline (story 101, feature 100). Builds one artifact,
+# then promotes it to Dev. This is the vertical slice: an entry pipeline that
+# includes a build template and a deploy template, where the deploy stage targets
+# an ADO environment. It exercises includesTemplate, deploysTo and (via the deploy
+# template) runsOnEnvironment; the build template pulls in an unresolved reference.
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+
+pool:
+  name: Default
+
+stages:
+- stage: Build
+  displayName: 'Build once'
+  jobs:
+  - template: templates/build.yml
+
+- stage: Deploy_Dev
+  displayName: 'Promote to Dev'
+  dependsOn: Build
+  jobs:
+  - template: templates/deploy.yml
+    parameters:
+      envName: dev
+      whatIf: false

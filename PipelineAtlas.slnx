@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PipelineAtlas.Cli/PipelineAtlas.Cli.csproj" />
+    <Project Path="src/PipelineAtlas.Core/PipelineAtlas.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PipelineAtlas.Core.Tests/PipelineAtlas.Core.Tests.csproj" />
+  </Folder>
+</Solution>

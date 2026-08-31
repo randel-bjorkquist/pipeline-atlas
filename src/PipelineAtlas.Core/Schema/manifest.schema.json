@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pipeline-atlas.dev/schema/manifest.schema.json",
+  "title": "Pipeline Atlas Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target", "nodes", "edges", "steps", "flows"],
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["displayName", "generatedAt", "toolVersion"],
+      "properties": {
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "generatedAt": { "type": "string" },
+        "toolVersion": { "type": "string" }
+      }
+    },
+    "nodes": { "type": "array", "items": { "$ref": "#/definitions/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/definitions/edge" } },
+    "steps": { "type": "array", "items": { "$ref": "#/definitions/step" } },
+    "flows": { "type": "array", "items": { "$ref": "#/definitions/flow" } }
+  },
+  "definitions": {
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["story", "feature", "bug"] },
+        "id": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    },
+    "flag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "note"],
+      "properties": {
+        "severity": {
+          "enum": ["secret", "hardcode", "techdebt", "duplication", "antipattern"]
+        },
+        "note": { "type": "string" },
+        "stepId": { "type": "string" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title", "purpose", "tags", "flags", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": [
+            "entryPipeline",
+            "template",
+            "envConfig",
+            "psModule",
+            "psScript",
+            "test",
+            "doc",
+            "data",
+            "adoEnvironment",
+            "adoResource",
+            "external"
+          ]
+        },
+        "path": { "type": "string" },
+        "title": { "type": "string" },
+        "label": { "type": "string" },
+        "purpose": { "type": "string" },
+        "clusterId": { "type": "string" },
+        "category": { "type": "string" },
+        "trigger": { "type": "string" },
+        "pool": { "type": "string" },
+        "body": { "type": "string" },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string" },
+              "default": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "tags": { "type": "array", "items": { "$ref": "#/definitions/tag" } },
+        "flags": { "type": "array", "items": { "$ref": "#/definitions/flag" } },
+        "status": {
+          "enum": ["active", "legacy-active", "dormant", "archived"]
+        },
+        "source": { "enum": ["parsed", "inferred"] }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "kind": {
+          "enum": [
+            "extends",
+            "includesTemplate",
+            "callsScript",
+            "runsOnEnvironment",
+            "deploysTo",
+            "consumesArtifact",
+            "producesArtifact",
+            "gatedBy",
+            "testedBy",
+            "referencesExternal",
+            "documents"
+          ]
+        },
+        "atStepId": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/definitions/tag" } }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "nodeId", "kind", "name", "doc", "tags"],
+      "properties": {
+        "id": { "type": "string" },
+        "nodeId": { "type": "string" },
+        "parentId": { "type": "string" },
+        "kind": { "enum": ["stage", "job", "step", "templateInclude"] },
+        "name": { "type": "string" },
+        "doc": { "type": "string" },
+        "action": { "type": "string" },
+        "externalDeps": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "$ref": "#/definitions/tag" } }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "trigger", "path"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "trigger": { "type": "string" },
+        "path": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}
