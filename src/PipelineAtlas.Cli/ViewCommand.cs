@@ -35,8 +35,10 @@ public static class ViewCommand
         if (!ViewerAssets.Any)
         {
             throw new InvalidOperationException(
-                "The viewer is not embedded in this build. Build the app first " +
-                "(npm run build in src/PipelineAtlas.App), then rebuild the CLI.");
+                "The viewer is not embedded in this build. This happens when the CLI " +
+                "was built with -p:BuildViewer=false, or before the viewer was compiled. " +
+                "Rebuild with `dotnet build` (which builds and embeds the viewer automatically, " +
+                "as long as Node.js 18+ is installed), then run `view` again.");
         }
 
         var manifest = Analyzer.Analyze(targetDir, new AnalyzeOptions { OnInfo = Log.Info });

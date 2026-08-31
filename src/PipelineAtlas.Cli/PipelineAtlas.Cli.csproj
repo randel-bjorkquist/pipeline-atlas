@@ -10,17 +10,33 @@
   </ItemGroup>
 
   <!-- Embed the built viewer (src/PipelineAtlas.App/dist) so the self-contained exe
-       carries the whole UI. If dist is missing but the app's deps are installed,
-       build it first; then add the files as resources before they're named. Set
-       -p:BuildViewer=false to skip (e.g. a CI stage that builds the viewer itself). -->
+       carries the whole UI. On a fresh clone dist/ and node_modules/ don't exist (both
+       are build artifacts, git-ignored), so this target installs the viewer's deps and
+       builds it automatically — a clone + `dotnet build` just works. The one thing it
+       can't provide is Node.js itself (npm is the viewer's compiler); if npm is missing
+       the build stops with a clear message. Set -p:BuildViewer=false to skip entirely
+       (e.g. building only the CLI, or a CI stage that builds the viewer separately). -->
   <PropertyGroup>
     <ViewerDir>$(MSBuildProjectDirectory)\..\PipelineAtlas.App</ViewerDir>
   </PropertyGroup>
 
   <Target Name="BuildViewer"
           BeforeTargets="AssignTargetPaths"
-          Condition="'$(BuildViewer)' != 'false' and !Exists('$(ViewerDir)\dist\index.html') and Exists('$(ViewerDir)\node_modules')">
-    <Message Importance="high" Text="patlas: building embedded viewer (src/PipelineAtlas.App)..." />
+          Condition="'$(BuildViewer)' != 'false' and !Exists('$(ViewerDir)\dist\index.html')">
+    <!-- Fail early and clearly if Node/npm isn't on this machine. -->
+    <Exec Command="npm --version" WorkingDirectory="$(ViewerDir)" ContinueOnError="true" StandardOutputImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="NpmExitCode" />
+    </Exec>
+    <Error Condition="'$(NpmExitCode)' != '0'"
+           Text="Pipeline Atlas needs Node.js (with npm) to build its web viewer. Install Node.js 18+ from https://nodejs.org and build again, or pass -p:BuildViewer=false to build just the CLI without the viewer." />
+
+    <!-- Install the viewer's dependencies if they're not present yet (npm ci =
+         clean, exact install from package-lock.json). -->
+    <Message Condition="!Exists('$(ViewerDir)\node_modules')" Importance="high" Text="patlas: installing viewer dependencies (npm ci)..." />
+    <Exec Condition="!Exists('$(ViewerDir)\node_modules')" Command="npm ci" WorkingDirectory="$(ViewerDir)" />
+
+    <!-- Compile the viewer (produces dist/, which PackViewer then embeds). -->
+    <Message Importance="high" Text="patlas: building embedded viewer (npm run build)..." />
     <Exec Command="npm run build" WorkingDirectory="$(ViewerDir)" />
   </Target>
 

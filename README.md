@@ -8,6 +8,19 @@ Pipeline Atlas turns a folder of Azure DevOps pipeline YAML and PowerShell into 
 - **Project-agnostic.** Nothing about a specific repo is baked into the tool; a target folder describes itself through a small `.patlas.json`.
 - **The map is a projection.** The engine parses the folder into one `manifest.json`; the viewer renders only that manifest. Regenerate, and the picture updates.
 
+## Getting started
+
+**Prerequisites:** the [.NET 10 SDK](https://dotnet.microsoft.com/download) and [Node.js 18+](https://nodejs.org) (npm compiles the web viewer). That is the entire setup — there are no manual install or configuration steps.
+
+```bash
+git clone https://github.com/randel-bjorkquist/pipeline-atlas.git
+cd pipeline-atlas
+dotnet build                                                    # also builds & embeds the viewer
+dotnet run --project src/PipelineAtlas.Cli -- view ./fixtures/sample
+```
+
+`dotnet build` compiles the viewer for you: the first build runs `npm ci` + `npm run build` under `src/PipelineAtlas.App` automatically (so it takes a little longer), then embeds the result in the CLI; later builds reuse it. If Node.js isn't installed, the build stops with a message telling you to install it. That's the only thing you have to provide yourself.
+
 ## Layout
 
 - `src/PipelineAtlas.Core` — the engine (C#/.NET 10 class library): a folder path (+ `.patlas.json`) → a validated `manifest.json`.
@@ -53,20 +66,12 @@ patlas view  C:\path\to\your\pipelines   # analyze and open the map
 
 Edit the generated `.patlas.json` (see below) to set your scan globs, work-item base URL, and how files cluster into subsystems, then re-run `view`. The tool only ever **reads** the target folder — it never writes into it.
 
-## Build & run (developers)
+## Build & test (developers)
 
-Prerequisites: the .NET 10 SDK, and Node.js (only to build the viewer).
+Setup is covered in [Getting started](#getting-started) above — `dotnet build` handles the viewer automatically. A few extra notes:
 
-```bash
-# build the viewer once (the CLI build also does this automatically if dist is missing)
-npm install --prefix src/PipelineAtlas.App
-
-# build everything and run against the sample fixture
-dotnet build
-dotnet run --project src/PipelineAtlas.Cli -- view ./fixtures/sample
-```
-
-Run the tests with `dotnet test`. Regenerate the golden manifest with `UPDATE_GOLDEN=1 dotnet test`.
+- To build just the CLI without the viewer (e.g. a CI stage that builds the viewer separately), pass `-p:BuildViewer=false`.
+- Run the tests with `dotnet test`. Regenerate the golden manifest with `UPDATE_GOLDEN=1 dotnet test`.
 
 ## Export a standalone executable
 
