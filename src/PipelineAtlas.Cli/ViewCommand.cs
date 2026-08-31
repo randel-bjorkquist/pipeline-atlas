@@ -41,7 +41,8 @@ public static class ViewCommand
                 "as long as Node.js 18+ is installed), then run `view` again.");
         }
 
-        var manifest = Analyzer.Analyze(targetDir, new AnalyzeOptions { OnInfo = Log.Info });
+        string? configPath = CliCommon.ResolveConfig(args.Value("config"));
+        var manifest = Analyzer.Analyze(targetDir, new AnalyzeOptions { OnInfo = Log.Info, ConfigPath = configPath });
         string manifestJson = JsonSerializer.Serialize(manifest, ManifestJson.Options);
 
         int port = int.TryParse(args.Value("port"), out int p) ? p : 0;

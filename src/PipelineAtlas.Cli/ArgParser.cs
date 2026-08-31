@@ -14,7 +14,7 @@ public sealed class ParsedArgs
 public static class ArgParser
 {
     private static readonly HashSet<string> ValueFlags =
-        new(StringComparer.Ordinal) { "-o", "--output", "--port" };
+        new(StringComparer.Ordinal) { "-o", "--output", "--port", "--config" };
 
     public static ParsedArgs Parse(IReadOnlyList<string> argv)
     {

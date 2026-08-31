@@ -100,6 +100,48 @@ public sealed class AnalyzeTests
     }
 
     [Fact]
+    public void ExternalConfigPathProducesTheSameManifest()
+    {
+        // Copy the sample's files (WITHOUT its .patlas.json) into a temp target, and
+        // point --config/ConfigPath at the config elsewhere — the target stays free
+        // of any .patlas.json yet analysis matches the in-folder case byte-for-byte.
+        string tempTarget = Path.Combine(Path.GetTempPath(), "patlas-extcfg-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempTarget);
+        try
+        {
+            foreach (string src in Directory.EnumerateFiles(SampleDir, "*", SearchOption.AllDirectories))
+            {
+                if (Path.GetFileName(src) == ".patlas.json")
+                {
+                    continue;
+                }
+
+                string rel = Path.GetRelativePath(SampleDir, src);
+                string dest = Path.Combine(tempTarget, rel);
+                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                File.Copy(src, dest, overwrite: true);
+            }
+
+            Assert.False(File.Exists(Path.Combine(tempTarget, ".patlas.json")));
+
+            var opts = new AnalyzeOptions
+            {
+                Now = Fixed.Now,
+                ToolVersion = Fixed.ToolVersion,
+                ConfigPath = Path.Combine(SampleDir, ".patlas.json"),
+            };
+
+            string external = JsonSerializer.Serialize(Analyzer.Analyze(tempTarget, opts), ManifestJson.Options);
+            string inFolder = JsonSerializer.Serialize(Run(), ManifestJson.Options);
+            Assert.Equal(inFolder, external);
+        }
+        finally
+        {
+            Directory.Delete(tempTarget, recursive: true);
+        }
+    }
+
+    [Fact]
     public void MatchesGoldenManifest()
     {
         string serialized = JsonSerializer.Serialize(Run(), ManifestJson.Options) + "\n";

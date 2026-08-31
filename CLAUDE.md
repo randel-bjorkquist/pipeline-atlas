@@ -128,6 +128,13 @@ Rules:
 
 `patlas init` writes a starter `.patlas.json` with the defaults so a new target is one edit away.
 
+**Config location.** By default the config sits at the target folder's root. Because a target is a
+read-only input (§8.1), the config may also live **outside** the target: `patlas analyze|view <folder>
+--config <path>` reads it from anywhere (and `patlas init <folder> --config <path>` writes the starter
+there). Globs stay relative to the target folder regardless of where the config file lives. This lets a
+source-controlled target stay untouched, with its description kept locally (e.g. under git-ignored
+`inputs/`).
+
 ---
 
 ## 5. Manifest schema (the contract everything renders from)

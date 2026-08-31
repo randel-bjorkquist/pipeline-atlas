@@ -10,11 +10,14 @@ public static class CliRunner
 
         Usage:
           patlas analyze <folder> [-o manifest.json]   scan a target and write its manifest
-          patlas init <folder>                          drop a starter .patlas.json
+          patlas init <folder> [--config <path>]        drop a starter .patlas.json
           patlas view <folder> [--port N]               analyze and open the viewer in a browser
 
         Flags:
           -o, --output <file>   manifest output path (analyze; default manifest.json)
+          --config <file>       use a .patlas.json outside the target folder, so a
+                                read-only/source-controlled target stays untouched
+                                (analyze/view; init writes the starter there)
           --port <N>            port for the viewer server (view; default: auto)
           --no-open             don't open the browser automatically (view)
           --allow-self          allow analyzing the Pipeline Atlas repo itself (analyze/view)

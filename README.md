@@ -66,6 +66,20 @@ patlas view  C:\path\to\your\pipelines   # analyze and open the map
 
 Edit the generated `.patlas.json` (see below) to set your scan globs, work-item base URL, and how files cluster into subsystems, then re-run `view`. The tool only ever **reads** the target folder — it never writes into it.
 
+### Keeping the config out of the target folder
+
+By default the `.patlas.json` lives at the root of the folder you analyze. If that folder is itself source-controlled (or otherwise read-only) and you don't want to commit a `.patlas.json` into it, keep the config **anywhere else** and point at it with `--config`:
+
+```bash
+# create the starter under inputs/ in your Pipeline Atlas checkout, not in the target
+patlas init C:\Source\PHA-Web\pipelines --config .\inputs\pha-web.patlas.json
+
+# then analyze / view the untouched target, supplying the external config
+patlas view C:\Source\PHA-Web\pipelines --config .\inputs\pha-web.patlas.json
+```
+
+The glob and path values inside the config are always interpreted **relative to the target folder**, wherever the file itself lives. Keeping these configs under `inputs/` is the recommended convention: that folder is git-ignored, so your target descriptions stay local and never land in this repo. (The tool only ever reads the target — it never copies it or writes into it.)
+
 ## Build & test (developers)
 
 Setup is covered in [Getting started](#getting-started) above — `dotnet build` handles the viewer automatically. A few extra notes:

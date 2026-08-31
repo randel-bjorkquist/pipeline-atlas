@@ -26,8 +26,9 @@ public static class AnalyzeCommand
 
         SelfGuard.AssertNotSelf(targetDir, args.Has("allow-self"));
 
+        string? configPath = CliCommon.ResolveConfig(args.Value("config"));
         string output = Path.GetFullPath(args.Value("output") ?? "manifest.json");
-        var manifest = Analyzer.Analyze(targetDir, new AnalyzeOptions { OnInfo = Log.Info });
+        var manifest = Analyzer.Analyze(targetDir, new AnalyzeOptions { OnInfo = Log.Info, ConfigPath = configPath });
 
         File.WriteAllText(output, JsonSerializer.Serialize(manifest, ManifestJson.Options) + "\n");
 

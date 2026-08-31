@@ -20,7 +20,7 @@ public static class Analyzer
         options ??= new AnalyzeOptions();
         Action<string> info = options.OnInfo ?? (_ => { });
 
-        PatlasConfig config = ConfigLoader.Load(targetDir);
+        PatlasConfig config = ConfigLoader.Load(targetDir, options.ConfigPath);
         IReadOnlyList<string> files = FolderScanner.Scan(targetDir, config.Scan);
 
         bool ArchiveMatch(string rel) => config.Archive is not null && Globs.Matches(config.Archive.Match, rel);

@@ -61,15 +61,24 @@ public static class ConfigLoader
         PropertyNameCaseInsensitive = true,
     };
 
-    /// <summary>Read .patlas.json from a target folder and fill in defaults.</summary>
-    public static PatlasConfig Load(string targetDir)
+    /// <summary>
+    /// Read a target's .patlas.json and fill in defaults. By default the config is
+    /// <paramref name="targetDir"/>/.patlas.json; pass <paramref name="configPath"/>
+    /// to read it from anywhere else (the target stays untouched). Globs inside the
+    /// config are always relative to <paramref name="targetDir"/>, wherever it lives.
+    /// </summary>
+    public static PatlasConfig Load(string targetDir, string? configPath = null)
     {
-        string configPath = Path.Combine(targetDir, ConfigFilename);
+        configPath = configPath is null
+            ? Path.Combine(targetDir, ConfigFilename)
+            : Path.GetFullPath(configPath);
         if (!File.Exists(configPath))
         {
             throw new FileNotFoundException(
-                $"No {ConfigFilename} found in target folder: {targetDir}. " +
-                "Run `patlas init <folder>` to create one.",
+                configPath.EndsWith(ConfigFilename, StringComparison.Ordinal) && Path.GetDirectoryName(configPath) == Path.GetFullPath(targetDir)
+                    ? $"No {ConfigFilename} found in target folder: {targetDir}. " +
+                      "Create one with `patlas init <folder>`, or keep it outside the target and point at it with --config <file>."
+                    : $"Config file not found: {configPath}.",
                 configPath);
         }
 
