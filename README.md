@@ -21,6 +21,27 @@ dotnet run --project src/PipelineAtlas.Cli -- view ./fixtures/sample
 
 `dotnet build` compiles the viewer for you: the first build runs `npm ci` + `npm run build` under `src/PipelineAtlas.App` automatically (so it takes a little longer), then embeds the result in the CLI; later builds reuse it. If Node.js isn't installed, the build stops with a message telling you to install it. That's the only thing you have to provide yourself.
 
+### How you run it (important)
+
+There is **no `patlas` command until you build the standalone executable** — so typing `patlas ...` in a fresh checkout gives *"the term 'patlas' is not recognized"*. From a source checkout you run the tool through the .NET SDK:
+
+```bash
+dotnet run --project src/PipelineAtlas.Cli -- <args>
+# e.g.
+dotnet run --project src/PipelineAtlas.Cli -- view ./fixtures/sample
+```
+
+Throughout this README, **`patlas <args>` is shorthand** for that longer form. You get an actual `patlas` command in one of two ways:
+
+- **Publish the executable** (see [Export a standalone executable](#export-a-standalone-executable)) and add the `publish` folder to your `PATH`. Then `patlas <args>` works anywhere.
+- **Or, for a source checkout, add a shortcut for your shell session.** In PowerShell:
+
+  ```powershell
+  function patlas { dotnet run --project src/PipelineAtlas.Cli -- @args }
+  ```
+
+  (Add that line to your PowerShell profile to make it stick.) Now `patlas view ./fixtures/sample` runs from source. Everywhere below that shows `patlas ...`, either do this, publish the exe, or substitute `dotnet run --project src/PipelineAtlas.Cli -- ...`.
+
 ## Layout
 
 - `src/PipelineAtlas.Core` — the engine (C#/.NET 10 class library): a folder path (+ `.patlas.json`) → a validated `manifest.json`.
@@ -29,6 +50,8 @@ dotnet run --project src/PipelineAtlas.Cli -- view ./fixtures/sample
 - `tests/PipelineAtlas.Core.Tests` — xUnit golden-file tests over `fixtures/sample`.
 
 ## Commands
+
+(`patlas` is shorthand — see [How you run it](#how-you-run-it-important). From a source checkout, replace `patlas` with `dotnet run --project src/PipelineAtlas.Cli --`.)
 
 ```
 patlas analyze <folder> [-o manifest.json]   scan a target and write its manifest
