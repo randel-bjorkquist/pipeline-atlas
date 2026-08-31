@@ -127,6 +127,46 @@ patlas view C:\path\to\a\pipeline\folder
 
 (Use the matching runtime identifier for other targets, e.g. `linux-x64`, `osx-arm64`. Pass `-p:BuildViewer=false` to skip the automatic viewer build when a CI stage builds it separately.)
 
+### Install `patlas` on your PATH
+
+Publishing drops the executable at `publish/patlas.exe` (or `publish/patlas` on macOS/Linux). Put its folder on your `PATH` and you can type `patlas` from any terminal — no `dotnet run`, no per-session shortcut.
+
+**Windows (PowerShell):**
+
+```powershell
+# 1. publish (from the repo root)
+dotnet publish src/PipelineAtlas.Cli -c Release -r win-x64 --self-contained true `
+  -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+
+# 2. copy the exe to a stable location
+$dest = "$HOME\bin"
+New-Item -ItemType Directory -Force $dest | Out-Null
+Copy-Item .\publish\patlas.exe $dest -Force
+
+# 3. add that folder to your user PATH (persists across sessions), once
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($userPath -notlike "*$dest*") {
+  [Environment]::SetEnvironmentVariable('Path', "$userPath;$dest", 'User')
+}
+```
+
+Open a **new** terminal (so it picks up the updated PATH), then verify:
+
+```powershell
+patlas --help
+```
+
+To use it in the *current* session without reopening, also run `$env:Path += ";$dest"`.
+
+**macOS / Linux:** copy `publish/patlas` into a directory already on your `PATH` (e.g. `~/.local/bin` or `/usr/local/bin`) and make it executable:
+
+```bash
+install -m 0755 publish/patlas ~/.local/bin/patlas   # ensure ~/.local/bin is on your PATH
+patlas --help
+```
+
+Once `patlas` is on your PATH, every `patlas ...` example in this README works verbatim — including against your own target, e.g. `patlas view C:\Source\PHA-Web\pipelines --config .\inputs\pha-web.patlas.json`.
+
 ## The target contract — `.patlas.json`
 
 Every folder Pipeline Atlas analyzes carries a `.patlas.json` at its root; it is how a target self-describes so the engine stays generic (scan globs, work-item link patterns, subsystem clusters, node status). Run `patlas init <folder>` to drop a starter you can edit. Work-item links are **best-effort**: until `workItems.baseUrl` is set to your real Azure DevOps org/project, tags still parse and display — they just aren't clickable.
