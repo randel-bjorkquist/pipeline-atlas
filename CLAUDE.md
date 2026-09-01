@@ -272,8 +272,16 @@ the environments to watch a promotion move.
 - **`core`/`cli` language:** **C# on .NET 10.** (An earlier TypeScript prototype is parked on the
   `phase1-core` branch.) The owner wants readable, ownable C# and a self-contained executable.
 - **Graph library:** **React Flow** for the web viewer; JavaScript is acceptable in the viewer layer only.
-- **ADO enrichment:** infer environments/gates from files now; live ADO REST approval/gate state is a later
-  phase. Work-item references are **best-effort** — failures degrade to Information-level messages, never fatal.
+- **ADO enrichment:** infer environments from files now. **Approval gates are not in the files** (they live on
+  the ADO Environment object), so today they come from `.patlas.json` `gates`. Two future ways to remove that
+  hand step: **(1)** query the ADO Environments/Checks REST API live when a connection is configured
+  (authoritative, deterministic); **(2)** infer gates from the target's prose docs (seed.md, DEPLOY-GATE.md) via
+  the optional AI layer. In-pipeline pauses (`ManualValidation`/`ManualIntervention`) *are* already detected from
+  the files (`Step.ManualPause`). Work-item references are **best-effort** — failures degrade to Information-level
+  messages, never fatal.
+- **Auto-clustering:** when `.patlas.json` declares no matching cluster for a file, the engine groups it by
+  top-level folder (files at the root fall under `(root)`), so a target reads as subsystems with zero config;
+  `clusters` is optional refinement, not a requirement.
 - **`inputs/` in git:** **git-ignored** — real analysis targets are kept locally and are *not* committed to the repo.
 
 ---

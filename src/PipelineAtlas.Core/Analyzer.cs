@@ -83,7 +83,7 @@ public static class Analyzer
                 Path = relPath,
                 Title = BaseName(relPath),
                 Purpose = TextUtil.HeaderComment(raw),
-                ClusterId = Globs.FirstMatch(config.Clusters, c => c.Match, relPath)?.Id,
+                ClusterId = Globs.FirstMatch(config.Clusters, c => c.Match, relPath)?.Id ?? FallbackCluster(relPath),
                 Tags = TextUtil.HarvestTags(raw, tagPatterns, baseUrl).ToList(),
                 Status = status,
                 Source = NodeSource.Parsed,
@@ -283,6 +283,16 @@ public static class Analyzer
         }
 
         // --- Inferred approval gates (gatedBy) ---------------------------------
+        // Environment approvals are NOT in the pipeline files — they live on the ADO
+        // Environment object — so today they come from .patlas.json `gates` (declared
+        // by hand, e.g. from a target's DEPLOY-GATE.md). Two ways to remove that manual
+        // step, both future work:
+        //   1. Live Azure DevOps: query the Environments/Checks REST API when an ADO
+        //      connection is configured — authoritative, deterministic, no config.
+        //   2. AI doc-inference: read the target's prose docs (seed.md, DEPLOY-GATE.md)
+        //      and propose gates when the optional AI layer is implemented.
+        // In-pipeline pauses (ManualValidation/ManualIntervention) are already detected
+        // from the files — see YamlParser.IsManualPause / Step.ManualPause.
         foreach (GateRule gate in config.Gates)
         {
             string envId = Ids.EnvNodeId(gate.Environment);
@@ -369,6 +379,16 @@ public static class Analyzer
     {
         string l = relPath.ToLowerInvariant();
         return l.EndsWith(".yml", StringComparison.Ordinal) || l.EndsWith(".yaml", StringComparison.Ordinal);
+    }
+
+    // When .patlas.json declares no matching cluster for a file, group it by its
+    // top-level folder so a target still reads as subsystems with zero config
+    // (CLAUDE.md sec 4). Files at the target root fall under "(root)".
+    private static string FallbackCluster(string relPath)
+    {
+        string posix = relPath.Replace('\\', '/');
+        int slash = posix.IndexOf('/');
+        return slash > 0 ? posix[..slash] : "(root)";
     }
 
     private static string PosixDir(string relPath)

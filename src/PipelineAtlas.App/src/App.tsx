@@ -266,7 +266,15 @@ export function App() {
     if (cfg?.path) sourcePath = cfg.path;
     envExtra = (
       <>
-        {gated && <p className="purpose">{GATE_ICON} This environment requires recorded human approval before a deploy proceeds.</p>}
+        {gated
+          ? <p className="purpose">{GATE_ICON} This environment requires recorded human approval before a deploy proceeds.</p>
+          : deployers.length > 0 && <p className="muted">No approval gate is declared for this environment.</p>}
+        {deployers.length > 0 && (
+          <p className="muted" style={{ marginTop: 6 }}>
+            Approval gates come from <b>.patlas.json</b> — they live in Azure DevOps, not the pipeline files.
+            Planned: read them live from Azure DevOps when configured, or infer them from the target's docs via AI.
+          </p>
+        )}
         {cfg?.path && (
           <div className="row"><span className="k">Config</span>
             <a href={`./source?path=${encodeURIComponent(cfg.path)}`} target="_blank" rel="noreferrer">{cfg.path} ↗</a></div>
