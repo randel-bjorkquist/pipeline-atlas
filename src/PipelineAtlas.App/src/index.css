@@ -390,6 +390,24 @@ a.chip:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* Work items — surfaced near the top of the panel; linked chips read as links. */
+.workitems {
+  margin: 8px 0 4px;
+}
+.chip.link {
+  border-color: #bfdbfe;
+  color: var(--accent);
+  font-weight: 600;
+}
+.chip.link:hover {
+  background: #eff6ff;
+  border-color: var(--accent);
+}
+.chip .ext {
+  font-size: 10px;
+  opacity: 0.75;
+}
 .flag {
   font-size: 12px;
   padding: 6px 8px;

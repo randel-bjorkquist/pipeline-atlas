@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { FullContent } from "./FullView";
 import { displayName, type Node } from "./manifest";
 import { Markdown } from "./Markdown";
-import { Section, SourceView } from "./Panel";
+import { Section, SourceView, WorkItems } from "./Panel";
 import { STATUS_LABEL, TYPE_COLOR, TYPE_LABEL } from "./theme";
 
 export interface RelatedDoc {
@@ -51,6 +51,8 @@ export function DocPanel({
         {" · "}{STATUS_LABEL[node.status]}
         {node.category && <> · <span style={{ textTransform: "capitalize" }}>{node.category}</span></>}
       </div>
+      <WorkItems tags={node.tags} />
+
       {onOpenSteps && stepCount ? (
         <button className="btn" style={{ margin: "6px 0 10px" }} onClick={onOpenSteps}>Open steps ({stepCount}) →</button>
       ) : null}
@@ -95,17 +97,6 @@ export function DocPanel({
                   {p.description && <div className="pdesc">{p.description}</div>}
                 </div>
               ))}
-            </>
-          )}
-
-          {node.tags.length > 0 && (
-            <>
-              <div className="section-title">Work items</div>
-              <div className="chips">
-                {node.tags.map((t) => t.url
-                  ? <a key={`${t.kind}:${t.id}`} className="chip" href={t.url} target="_blank" rel="noreferrer">{t.kind} {t.id}</a>
-                  : <span key={`${t.kind}:${t.id}`} className="chip">{t.kind} {t.id}</span>)}
-              </div>
             </>
           )}
 

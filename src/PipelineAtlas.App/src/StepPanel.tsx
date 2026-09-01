@@ -3,7 +3,7 @@ import type { FullContent } from "./FullView";
 import type { Step } from "./manifest";
 import type { RelatedDoc } from "./DocPanel";
 import { Markdown } from "./Markdown";
-import { Section, SourceView } from "./Panel";
+import { Section, SourceView, WorkItems } from "./Panel";
 import { STEP_KIND_COLOR, STEP_KIND_LABEL } from "./theme";
 
 // The 100-ft counterpart to DocPanel — same accordion (Documentation / Details /
@@ -21,6 +21,8 @@ export function StepPanel({ step, sourcePath, docs = [], openFull }: { step: Ste
       <h2>{step.name}</h2>
       <div className="sub"><span style={{ color: STEP_KIND_COLOR[step.kind], fontWeight: 600 }}>{STEP_KIND_LABEL[step.kind]}</span></div>
       {step.manualPause && <p className="purpose">🛑 This step pauses the run for human interaction (manual approval) before continuing.</p>}
+
+      <WorkItems tags={step.tags} />
 
       <div key={step.id}>
         <Section title="DOCUMENTATION" defaultOpen>
@@ -41,16 +43,6 @@ export function StepPanel({ step, sourcePath, docs = [], openFull }: { step: Ste
             <>
               <div className="section-title">External deps</div>
               <div className="chips">{step.externalDeps.map((d) => <span className="chip" key={d}>{d}</span>)}</div>
-            </>
-          )}
-          {step.tags.length > 0 && (
-            <>
-              <div className="section-title">Work items</div>
-              <div className="chips">
-                {step.tags.map((t) => t.url
-                  ? <a key={`${t.kind}:${t.id}`} className="chip" href={t.url} target="_blank" rel="noreferrer">{t.kind} {t.id}</a>
-                  : <span key={`${t.kind}:${t.id}`} className="chip">{t.kind} {t.id}</span>)}
-              </div>
             </>
           )}
         </Section>

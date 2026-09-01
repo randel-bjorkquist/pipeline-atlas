@@ -1,9 +1,32 @@
 import { useEffect, useState } from "react";
 import type { FullContent } from "./FullView";
+import type { Tag } from "./manifest";
 import { highlight } from "./highlight";
 
 // Shared building blocks for the right-hand panel so nodes and steps render the
 // same accordion (DOCUMENTATION / DETAILS / SOURCE).
+
+// Work-item chips, shown prominently near the top of the panel (not buried in an
+// accordion) because they're the main cross-reference into Azure DevOps. Linked
+// chips carry an ↗ so they clearly read as clickable.
+export function WorkItems({ tags }: { tags: Tag[] }) {
+  if (tags.length === 0) return null;
+  return (
+    <div className="workitems">
+      <div className="section-title">Work items</div>
+      <div className="chips">
+        {tags.map((t) =>
+          t.url ? (
+            <a key={`${t.kind}:${t.id}`} className="chip link" href={t.url} target="_blank" rel="noreferrer">
+              {t.kind} {t.id} <span className="ext">↗</span>
+            </a>
+          ) : (
+            <span key={`${t.kind}:${t.id}`} className="chip">{t.kind} {t.id}</span>
+          ))}
+      </div>
+    </div>
+  );
+}
 
 export function Section({ title, defaultOpen, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
