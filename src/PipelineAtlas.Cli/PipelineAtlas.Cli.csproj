@@ -20,9 +20,18 @@
     <ViewerDir>$(MSBuildProjectDirectory)\..\PipelineAtlas.App</ViewerDir>
   </PropertyGroup>
 
+  <!-- Files that, when changed, require the embedded viewer (dist/) to be rebuilt.
+       Used as the target's Inputs so it recompiles on a source change, not only
+       when dist is absent (a stale dist would otherwise be embedded silently). -->
+  <ItemGroup>
+    <ViewerSource Include="$(ViewerDir)\src\**\*;$(ViewerDir)\index.html;$(ViewerDir)\package.json;$(ViewerDir)\package-lock.json;$(ViewerDir)\vite.config.ts;$(ViewerDir)\tsconfig.json" />
+  </ItemGroup>
+
   <Target Name="BuildViewer"
           BeforeTargets="AssignTargetPaths"
-          Condition="'$(BuildViewer)' != 'false' and !Exists('$(ViewerDir)\dist\index.html')">
+          Condition="'$(BuildViewer)' != 'false'"
+          Inputs="@(ViewerSource)"
+          Outputs="$(ViewerDir)\dist\index.html">
     <!-- Fail early and clearly if Node/npm isn't on this machine. -->
     <Exec Command="npm --version" WorkingDirectory="$(ViewerDir)" ContinueOnError="true" StandardOutputImportance="low">
       <Output TaskParameter="ExitCode" PropertyName="NpmExitCode" />
