@@ -137,6 +137,7 @@
         "doc": { "type": "string" },
         "action": { "type": "string" },
         "externalDeps": { "type": "array", "items": { "type": "string" } },
+        "manualPause": { "type": "boolean" },
         "tags": { "type": "array", "items": { "$ref": "#/definitions/tag" } }
       }
     },

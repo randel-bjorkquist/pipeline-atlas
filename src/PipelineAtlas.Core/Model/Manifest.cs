@@ -66,6 +66,7 @@ public sealed record Step
     public required string Doc { get; init; }          // seeded from inline comments
     public string? Action { get; init; }               // task/command summary
     public IReadOnlyList<string>? ExternalDeps { get; init; }
+    public bool? ManualPause { get; init; }             // true = pauses the run for human interaction (ManualValidation/ManualIntervention)
     public IReadOnlyList<Tag> Tags { get; init; } = [];
 }
 

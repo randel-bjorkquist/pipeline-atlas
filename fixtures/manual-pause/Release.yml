@@ -1,0 +1,22 @@
+# A release pipeline that pauses for a human before promoting to production.
+trigger: none
+
+stages:
+  - stage: Promote
+    jobs:
+      - job: WaitForApproval
+        pool: server # agentless — required for ManualValidation
+        steps:
+          # Halts the run until an approver resumes or rejects.
+          - task: ManualValidation@0
+            inputs:
+              instructions: "Confirm the prod smoke test passed before continuing."
+              onTimeout: "reject"
+          # Classic-release manual intervention — also a human pause.
+          - task: ManualIntervention@8
+            displayName: "Manual intervention"
+      - job: Deploy
+        steps:
+          # An ordinary automated step — must NOT be flagged as a pause.
+          - script: echo deploying
+            displayName: "Deploy"

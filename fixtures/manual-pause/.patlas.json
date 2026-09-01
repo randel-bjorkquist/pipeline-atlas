@@ -1,0 +1,4 @@
+{
+  "displayName": "Manual Pause Fixture",
+  "description": "Exercises detection of in-pipeline human-approval pauses."
+}

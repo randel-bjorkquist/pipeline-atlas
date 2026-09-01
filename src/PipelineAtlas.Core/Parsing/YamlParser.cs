@@ -267,8 +267,23 @@ public sealed partial class YamlParser
 
         string name = StepName(step);
         string id = UniqueStepId($"{baseId}/{Ids.Slug(name)}");
-        AddStep(id, StepKind.Step, parentId, name, StepAction(step), step);
+        AddStep(id, StepKind.Step, parentId, name, StepAction(step), step, IsManualPause(step));
         DetectScriptCalls(step);
+    }
+
+    // A step that halts the run until a human acts: the Azure Pipelines
+    // ManualValidation task (agentless approval) or the classic-release
+    // ManualIntervention task. Matched on the task name, version-agnostic.
+    private static bool IsManualPause(YamlMappingNode step)
+    {
+        if (Yaml.GetScalar(step, "task") is not { } task)
+        {
+            return false;
+        }
+
+        string name = task.Split('@', 2)[0].Trim();
+        return name.Equals("ManualValidation", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("ManualIntervention", StringComparison.OrdinalIgnoreCase);
     }
 
     // callsScript: a step that runs/imports a PowerShell file in this target. Paths
@@ -506,7 +521,7 @@ public sealed partial class YamlParser
         return NormalizePosix(dir.Length == 0 ? r : $"{dir}/{r}");
     }
 
-    private void AddStep(string id, StepKind kind, string? parentId, string name, string? action, YamlNode? source)
+    private void AddStep(string id, StepKind kind, string? parentId, string name, string? action, YamlNode? source, bool manualPause = false)
     {
         _result.Steps.Add(new Step
         {
@@ -517,6 +532,7 @@ public sealed partial class YamlParser
             Name = name,
             Doc = CommentAbove(source),
             Action = action,
+            ManualPause = manualPause ? true : null, // null so non-pause steps omit the field
             Tags = [],
         });
     }

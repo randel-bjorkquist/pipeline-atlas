@@ -20,6 +20,7 @@ export function StepPanel({ step, sourcePath, docs = [], openFull }: { step: Ste
     <aside className="doc" ref={ref}>
       <h2>{step.name}</h2>
       <div className="sub"><span style={{ color: STEP_KIND_COLOR[step.kind], fontWeight: 600 }}>{STEP_KIND_LABEL[step.kind]}</span></div>
+      {step.manualPause && <p className="purpose">🛑 This step pauses the run for human interaction (manual approval) before continuing.</p>}
 
       <div key={step.id}>
         <Section title="DOCUMENTATION" defaultOpen>

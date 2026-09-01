@@ -36,6 +36,14 @@ interface Menu {
 }
 
 const GATE_ICON = "🛑"; // an environment awaiting human approval before continuing
+// ▶ a pipeline with no automatic trigger — started by hand. U+FE0E forces the
+// text-presentation triangle (plain black glyph, no border), not the ▶️ emoji.
+const MANUAL_START_ICON = "▶︎";
+
+// An entry pipeline with no automatic trigger (CI/PR/schedule) — a human starts it.
+function isManualStart(n: Node): boolean {
+  return n.type === "entryPipeline" && n.trigger === "manual";
+}
 
 function clusterKey(node: Node): string {
   if (node.clusterId) return node.clusterId;
@@ -79,6 +87,20 @@ export function App() {
     return s;
   }, [manifest]);
 
+  // Pipelines/templates that contain a step which pauses the run for a human
+  // (ManualValidation / ManualIntervention) — the in-file counterpart to env gates.
+  const manualPauseNodes = useMemo(() => {
+    const s = new Set<string>();
+    for (const st of manifest?.steps ?? []) if (st.manualPause) s.add(st.nodeId);
+    return s;
+  }, [manifest]);
+
+  // Everything that stops an automated run for a human: environment approvals +
+  // in-pipeline manual-pause steps. Drives the 🛑 node badge across all views.
+  const stops = useMemo(
+    () => new Set<string>([...gatedEnvs, ...manualPauseNodes]),
+    [gatedEnvs, manualPauseNodes]);
+
   const clusters = useMemo(() => {
     const map = new Map<string, { id: string; label: string; count: number }>();
     for (const n of manifest?.nodes ?? []) {
@@ -112,12 +134,12 @@ export function App() {
   const { flowNodes, flowEdges } = useMemo(() => {
     if (!manifest) return { flowNodes: [] as FlowNode[], flowEdges: [] as FlowEdge[] };
     let r: { nodes: FlowNode[]; edges: FlowEdge[] };
-    if (view.level === "deployment") r = buildDeploymentView(manifest, gatedEnvs);
-    else if (view.level === "policy") r = buildPolicyView(manifest, selectedId, passesTag);
-    else if (view.level === "allfiles") r = buildAllFilesView(manifest, clusters, selectedId, passesTag, gatedEnvs);
+    if (view.level === "deployment") r = buildDeploymentView(manifest, stops);
+    else if (view.level === "policy") r = buildPolicyView(manifest, selectedId, passesTag, stops);
+    else if (view.level === "allfiles") r = buildAllFilesView(manifest, clusters, selectedId, passesTag, stops);
     else if (view.level === "subsystem") r = buildClusterView(manifest, clusters, tagFilter, byId);
     else if (view.level === "steps") r = buildStepsView(stepsByNode.get(view.pipeline ?? "") ?? [], stepId);
-    else if (view.level === "files") r = buildFilesView(manifest, view.cluster, selectedId, passesTag, gatedEnvs);
+    else if (view.level === "files") r = buildFilesView(manifest, view.cluster, selectedId, passesTag, stops);
     else r = { nodes: [], edges: [] };
     return { flowNodes: r.nodes, flowEdges: r.edges };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -309,7 +331,8 @@ export function App() {
                   <span className="item" key={k}><span className="swatch" style={{ background: STEP_KIND_COLOR[k] }} />{k}</span>))
               : [...new Set(manifest.nodes.map((n) => n.type))].map((t) => (
                   <span className="item" key={t}><span className="swatch" style={{ background: TYPE_COLOR[t] }} />{TYPE_LABEL[t]}</span>))}
-            {(view.level === "deployment") && <span className="item">{GATE_ICON} awaiting approval</span>}
+            {["deployment", "policy", "files", "allfiles", "steps"].includes(view.level) && <span className="item">{GATE_ICON} stops for a human</span>}
+            {["deployment", "policy", "files", "allfiles"].includes(view.level) && <span className="item">{MANUAL_START_ICON} manual start</span>}
           </div>
         </div>
       )}
@@ -404,10 +427,13 @@ function computeFacts(m: Manifest, n: Node, byId: Map<string, Node>, stepsByNode
   const facts: string[] = [];
   const list = (kind: string) => out.filter((e) => e.kind === kind).map((e) => name(e.to));
 
+  if (isManualStart(n)) facts.push(`${MANUAL_START_ICON} Started manually — no automatic trigger (CI/PR/schedule)`);
   const deploys = list("deploysTo");
   if (deploys.length) facts.push(`Deploys to ${[...new Set(deploys)].join(", ")}`);
   const gated = out.filter((e) => e.kind === "gatedBy").map((e) => name(e.to));
   if (gated.length) facts.push(`Requires approval at ${[...new Set(gated)].join(", ")}`);
+  const pauses = (stepsByNode.get(n.id) ?? []).filter((s) => s.manualPause);
+  if (pauses.length) facts.push(`${GATE_ICON} Pauses for manual approval (${pauses.length} step${pauses.length > 1 ? "s" : ""})`);
   const runsOn = list("runsOnEnvironment");
   if (runsOn.length) facts.push(`Runs on environment ${[...new Set(runsOn)].join(", ")}`);
   const includes = list("includesTemplate");
@@ -429,8 +455,13 @@ function computeFacts(m: Manifest, n: Node, byId: Map<string, Node>, stepsByNode
 
 // --- view builders -----------------------------------------------------------
 
+// Prefix a node's label with its human-interaction markers: 🛑 where an
+// automated run stops for approval, ▶︎ where a pipeline must be started by hand.
 function gatedLabel(n: Node, gated: Set<string>): string {
-  return (gated.has(n.id) ? `${GATE_ICON} ` : "") + displayName(n);
+  const prefix =
+    (gated.has(n.id) ? `${GATE_ICON} ` : "") +
+    (isManualStart(n) ? `${MANUAL_START_ICON} ` : "");
+  return prefix + displayName(n);
 }
 
 function buildDeploymentView(manifest: Manifest, gated: Set<string>) {
@@ -463,7 +494,7 @@ function buildDeploymentView(manifest: Manifest, gated: Set<string>) {
 // Policy pipelines as a compact grid — most are standalone gates, so a grid reads
 // far better (and fits at a consistent zoom) than a tall dagre column. Click for
 // details / what it enforces; double-click drills into its steps.
-function buildPolicyView(manifest: Manifest, selectedId: string | null, passes: (n: Node) => boolean) {
+function buildPolicyView(manifest: Manifest, selectedId: string | null, passes: (n: Node) => boolean, stops: Set<string>) {
   const members = manifest.nodes
     .filter((n) => n.type === "entryPipeline" && n.category === "policy")
     .sort((a, b) => displayName(a).localeCompare(displayName(b)));
@@ -473,7 +504,7 @@ function buildPolicyView(manifest: Manifest, selectedId: string | null, passes: 
   const ROW_H = 64;
   const nodes: FlowNode[] = members.map((n, i) => ({
     id: n.id,
-    data: { label: displayName(n) },
+    data: { label: gatedLabel(n, stops) },
     position: { x: (i % COLS) * COL_W, y: Math.floor(i / COLS) * ROW_H },
     style: boxStyle({ accent: TYPE_COLOR[n.type], selected: n.id === selectedId, opacity: passes(n) ? 1 : 0.3, fontSize: 12, weight: 600, width: 210 }),
   }));
@@ -575,7 +606,7 @@ function buildFilesView(manifest: Manifest, cluster: string | null, selectedId: 
 function buildStepsView(steps: Step[], selectedStepId: string | null) {
   const ids = new Set(steps.map((s) => s.id));
   const nodes: FlowNode[] = steps.map((s) => ({
-    id: s.id, data: { label: s.name }, position: { x: 0, y: 0 },
+    id: s.id, data: { label: (s.manualPause ? `${GATE_ICON} ` : "") + s.name }, position: { x: 0, y: 0 },
     style: boxStyle({ accent: STEP_KIND_COLOR[s.kind], selected: s.id === selectedStepId, width: 230 }),
   }));
   const edges: FlowEdge[] = [];

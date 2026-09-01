@@ -92,6 +92,7 @@ export interface Step {
   doc: string;
   action?: string;
   externalDeps?: string[];
+  manualPause?: boolean; // true = pauses the run for human interaction (ManualValidation/ManualIntervention)
   tags: Tag[];
 }
 
