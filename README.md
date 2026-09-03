@@ -129,41 +129,56 @@ patlas view C:\path\to\a\pipeline\folder
 
 ### Install `patlas` on your PATH
 
-Publishing drops the executable at `publish/patlas.exe` (or `publish/patlas` on macOS/Linux). Put its folder on your `PATH` and you can type `patlas` from any terminal — no `dotnet run`, no per-session shortcut.
+Publishing drops the executable at `publish/patlas.exe` (or `publish/patlas` on macOS/Linux). Put `patlas` on your `PATH` and you can run it from any terminal — no `dotnet run`, no per-session shortcut. There are two ways, differing only in how updates reach the command you run.
 
-**Windows (PowerShell):**
+First, publish (from the repo root):
 
 ```powershell
-# 1. publish (from the repo root)
 dotnet publish src/PipelineAtlas.Cli -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+```
 
-# 2. copy the exe to a stable location
+**Option A — copy the exe to a stable folder.** The exe then lives independently of the repo, so cleaning the repo won't break it. The catch: the copy is a *snapshot*.
+
+```powershell
 $dest = "$HOME\bin"
 New-Item -ItemType Directory -Force $dest | Out-Null
 Copy-Item .\publish\patlas.exe $dest -Force
 
-# 3. add that folder to your user PATH (persists across sessions), once
+# add that folder to your user PATH (persists across sessions), once
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if ($userPath -notlike "*$dest*") {
   [Environment]::SetEnvironmentVariable('Path', "$userPath;$dest", 'User')
 }
 ```
 
-Open a **new** terminal (so it picks up the updated PATH), then verify:
+> ⚠️ **Re-copy after every rebuild.** `patlas` runs the *copied* exe, not the one in `publish/`. After each `dotnet publish` you must re-run the `Copy-Item` step, or you'll silently keep launching the previous build. (This is the #1 "my change didn't show up" gotcha.)
+
+**Option B — put the `publish` folder itself on your PATH.** Then republishing updates the exact file `patlas` runs — no copy step. The catch: `publish/` is a git-ignored build folder, so if you clean it, `patlas` breaks until you republish.
+
+```powershell
+$pub = (Resolve-Path .\publish).Path
+
+# remove any copied patlas.exe elsewhere on PATH so it can't shadow this one
+Remove-Item "$HOME\bin\patlas.exe" -ErrorAction SilentlyContinue
+
+# add the publish folder to your user PATH (persists), once
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($userPath -notlike "*$pub*") {
+  [Environment]::SetEnvironmentVariable('Path', "$userPath;$pub", 'User')
+}
+```
+
+Either way, open a **new** terminal (to pick up the PATH change), then verify — the second line also tells you *which* copy wins if more than one is on your PATH:
 
 ```powershell
 patlas --help
+(Get-Command patlas).Source   # should point where you intend — …\bin (A) or …\publish (B)
 ```
 
-To use it in the *current* session without reopening, also run `$env:Path += ";$dest"`.
+To use it in the current session without reopening, also run `$env:Path += ";$dest"` (Option A) or `";$pub"` (Option B).
 
-**macOS / Linux:** copy `publish/patlas` into a directory already on your `PATH` (e.g. `~/.local/bin` or `/usr/local/bin`) and make it executable:
-
-```bash
-install -m 0755 publish/patlas ~/.local/bin/patlas   # ensure ~/.local/bin is on your PATH
-patlas --help
-```
+**macOS / Linux:** same choice — either copy `publish/patlas` into a directory already on your `PATH` (`install -m 0755 publish/patlas ~/.local/bin/patlas`) and re-copy after each build, or add the `publish` folder to your `PATH` and just republish. Verify with `which patlas`.
 
 Once `patlas` is on your PATH, every `patlas ...` example in this README works verbatim — including against your own target, e.g. `patlas view C:\Source\PHA-Web\pipelines --config .\inputs\pha-web.patlas.json`.
 
